@@ -6,6 +6,99 @@ let lostMarker, foundMarker;
 let allLostItems = [];
 let allFoundItems = [];
 
+const MOCK_LOST_ITEMS = [
+  {
+    id: 1,
+    title: "Black College Bag",
+    description: "I lost a black college bag near the library. It has a blue water bottle in the side pocket and notebook inside.",
+    category: "Bag",
+    primary_color: "Black",
+    location_name: "College Library Main Entrance",
+    latitude: 12.9716,
+    longitude: 77.5946,
+    lost_datetime: "2026-09-18T14:00:00",
+    owner_name: "Rohan Sharma",
+    hidden_characteristic: "blue turtle keychain",
+    image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    id: 2,
+    title: "iPhone 15 Pro",
+    description: "Lost my dark grey iPhone near the Student Cafeteria around lunchtime. Has a transparent silicone case.",
+    category: "Electronics",
+    primary_color: "Grey",
+    location_name: "Student Cafeteria Block A",
+    latitude: 12.9722,
+    longitude: 77.5950,
+    lost_datetime: "2026-09-18T12:30:00",
+    owner_name: "Ananya Patel",
+    hidden_characteristic: "golden retriever wallpaper",
+    image_url: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    id: 3,
+    title: "Silver Car Keys",
+    description: "Set of silver keys lost near the Sports Complex basketball court.",
+    category: "Keys",
+    primary_color: "Silver",
+    location_name: "Campus Sports Complex",
+    latitude: 12.9705,
+    longitude: 77.5930,
+    lost_datetime: "2026-09-17T18:00:00",
+    owner_name: "Vikram Verma",
+    hidden_characteristic: "red leather lanyard",
+    image_url: "https://images.unsplash.com/photo-1582142839970-2b9322079f82?auto=format&fit=crop&w=600&q=80"
+  }
+];
+
+const MOCK_FOUND_ITEMS = [
+  {
+    id: 1,
+    title: "Dark Backpack",
+    description: "Found a dark school bag near Block B path containing a hydration bottle and some study notes.",
+    category: "Bag",
+    primary_color: "Black",
+    location_name: "Academic Block B Pathway",
+    latitude: 12.9718,
+    longitude: 77.5949,
+    found_datetime: "2026-09-18T15:15:00",
+    finder_name: "Security Desk Staff",
+    finder_contact: "security.desk@campus.edu",
+    image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
+    public_notes: "Handed over to Block B security guard."
+  },
+  {
+    id: 2,
+    title: "Smartphone with Clear Case",
+    description: "Found a grey smartphone lying on a bench outside Student Union.",
+    category: "Electronics",
+    primary_color: "Grey",
+    location_name: "Student Union Bench",
+    latitude: 12.9723,
+    longitude: 77.5952,
+    found_datetime: "2026-09-18T13:00:00",
+    finder_name: "Priya Nair",
+    finder_contact: "priya.nair@example.edu",
+    image_url: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80",
+    public_notes: "Currently with cafeteria staff."
+  },
+  {
+    id: 3,
+    title: "Keychain with Lanyard",
+    description: "Found keys with a lanyard on the grass near sports ground.",
+    category: "Keys",
+    primary_color: "Silver",
+    location_name: "Sports Ground Edge",
+    latitude: 12.9708,
+    longitude: 77.5933,
+    found_datetime: "2026-09-17T19:30:00",
+    finder_name: "David Ray",
+    finder_contact: "david.ray@example.com",
+    image_url: "https://images.unsplash.com/photo-1582142839970-2b9322079f82?auto=format&fit=crop&w=600&q=80",
+    public_notes: "Kept safely at main gate."
+  }
+];
+
 document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initMaps();
@@ -126,7 +219,7 @@ function updateFoundCoords(lat, lng) {
   document.getElementById("found-lng-disp").innerText = lng.toFixed(4);
 }
 
-// Fetch Feeds from Backend
+// Fetch Feeds from Backend with Client Fallback
 async function fetchFeeds() {
   try {
     const [resLost, resFound] = await Promise.all([
@@ -134,22 +227,26 @@ async function fetchFeeds() {
       fetch(`${API_BASE}/items/found`)
     ]);
 
+    if (!resLost.ok || !resFound.ok) throw new Error("API not reachable");
+
     const lostData = await resLost.json();
     const foundData = await resFound.json();
 
     allLostItems = lostData.data || [];
     allFoundItems = foundData.data || [];
 
-    document.getElementById("stat-lost-count").innerText = allLostItems.length;
-    document.getElementById("stat-found-count").innerText = allFoundItems.length;
-
-    renderLostFeed(allLostItems);
-    renderFoundFeed(allFoundItems);
-    populateTargetSelect();
-
   } catch (err) {
-    console.error("Error fetching feeds:", err);
+    console.warn("Backend API offline or unreachable (e.g. GitHub Pages static mode). Loading sample items.", err);
+    allLostItems = [...MOCK_LOST_ITEMS];
+    allFoundItems = [...MOCK_FOUND_ITEMS];
   }
+
+  document.getElementById("stat-lost-count").innerText = allLostItems.length;
+  document.getElementById("stat-found-count").innerText = allFoundItems.length;
+
+  renderLostFeed(allLostItems);
+  renderFoundFeed(allFoundItems);
+  populateTargetSelect();
 }
 
 function renderLostFeed(items) {
@@ -249,11 +346,30 @@ async function handleReportLost(e) {
       document.getElementById("form-report-lost").reset();
       await fetchFeeds();
       navigateTo("home");
-    } else {
-      alert(`Submission error: ${data.detail || 'Invalid data'}`);
+      return;
     }
   } catch (err) {
-    alert("Failed to submit report. Ensure backend server is running.");
+    // Client-side fallback for static GitHub Pages demo
+    const newItem = {
+      id: allLostItems.length + 1,
+      title: document.getElementById("lost-title").value,
+      description: document.getElementById("lost-desc").value,
+      category: document.getElementById("lost-category").value,
+      primary_color: document.getElementById("lost-color").value,
+      location_name: document.getElementById("lost-location").value,
+      latitude: parseFloat(document.getElementById("lost-lat").value),
+      longitude: parseFloat(document.getElementById("lost-lng").value),
+      lost_datetime: document.getElementById("lost-datetime").value,
+      hidden_characteristic: document.getElementById("lost-hidden").value,
+      owner_name: document.getElementById("lost-owner-name").value,
+      image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"
+    };
+    allLostItems.unshift(newItem);
+    alert("Lost item report registered locally!");
+    document.getElementById("form-report-lost").reset();
+    renderLostFeed(allLostItems);
+    populateTargetSelect();
+    navigateTo("home");
   }
 }
 
@@ -283,11 +399,31 @@ async function handleReportFound(e) {
       document.getElementById("form-report-found").reset();
       await fetchFeeds();
       navigateTo("home");
-    } else {
-      alert(`Submission error: ${data.detail || 'Invalid data'}`);
+      return;
     }
   } catch (err) {
-    alert("Failed to submit report. Ensure backend server is running.");
+    // Client-side fallback for static GitHub Pages demo
+    const newItem = {
+      id: allFoundItems.length + 1,
+      title: document.getElementById("found-title").value,
+      description: document.getElementById("found-desc").value,
+      category: document.getElementById("found-category").value,
+      primary_color: document.getElementById("found-color").value,
+      location_name: document.getElementById("found-location").value,
+      latitude: parseFloat(document.getElementById("found-lat").value),
+      longitude: parseFloat(document.getElementById("found-lng").value),
+      found_datetime: document.getElementById("found-datetime").value,
+      finder_name: document.getElementById("found-finder-name").value,
+      finder_contact: document.getElementById("found-finder-contact").value,
+      public_notes: document.getElementById("found-public-notes").value,
+      image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80"
+    };
+    allFoundItems.unshift(newItem);
+    alert("Found item report registered locally!");
+    document.getElementById("form-report-found").reset();
+    renderFoundFeed(allFoundItems);
+    populateTargetSelect();
+    navigateTo("home");
   }
 }
 
