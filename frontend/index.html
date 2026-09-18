@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retrace.io - AI Lost-and-Found Intelligence System</title>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-radar"></i></div>
+      <span>Retrace<span style="color: #60a5fa;">.io</span></span>
+    </div>
+    <ul class="nav-links">
+      <li><button class="nav-btn active" data-screen="home"><i class="fa-solid fa-house"></i> Home</button></li>
+      <li><button class="nav-btn" data-screen="report-lost"><i class="fa-solid fa-circle-exclamation" style="color: #f87171;"></i> Lost Item</button></li>
+      <li><button class="nav-btn" data-screen="report-found"><i class="fa-solid fa-circle-check" style="color: #34d399;"></i> Found Item</button></li>
+      <li><button class="nav-btn" data-screen="match-results"><i class="fa-solid fa-wand-magic-sparkles" style="color: #c084fc;"></i> AI Matches</button></li>
+      <li><button class="nav-btn" data-screen="contradiction"><i class="fa-solid fa-file-triangle" style="color: #fbbf24;"></i> Doc Contradictions</button></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+
+    <!-- ================================================================= -->
+    <!-- SCREEN 1: HOME DASHBOARD -->
+    <!-- ================================================================= -->
+    <section id="screen-home" class="screen active">
+      <div class="hero-card">
+        <div>
+          <h1 class="hero-title">AI Lost-and-Found Intelligence System</h1>
+          <p class="hero-subtitle">
+            People describe lost belongings differently than finders do. Our multi-vector AI engine uses 
+            <strong>perceptual dHash, semantic text matching, spatial Haversine distance, temporal windows,</strong> 
+            and <strong>fraud protection verification</strong> to connect lost items with finders.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-primary" data-action="nav" data-target="report-lost"><i class="fa-solid fa-plus"></i> Report Lost Item</button>
+            <button class="btn-secondary" data-action="nav" data-target="report-found"><i class="fa-solid fa-hand-holding-hand"></i> Report Found Item</button>
+            <button class="btn-secondary" data-action="nav" data-target="match-results"><i class="fa-solid fa-brain"></i> Run AI Matching</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="fa-solid fa-box-open"></i></div>
+          <div>
+            <div class="stat-num" id="stat-lost-count">0</div>
+            <div class="stat-label">Active Lost Reports</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon emerald"><i class="fa-solid fa-hand-holding"></i></div>
+          <div>
+            <div class="stat-num" id="stat-found-count">0</div>
+            <div class="stat-label">Reported Found Items</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fa-solid fa-bolt"></i></div>
+          <div>
+            <div class="stat-num">91%</div>
+            <div class="stat-label">Max AI Match Similarity</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber"><i class="fa-solid fa-shield-halved"></i></div>
+          <div>
+            <div class="stat-num">100%</div>
+            <div class="stat-label">Fraud Protection Active</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Feed Columns -->
+      <div class="grid-2">
+        <!-- Lost Items Feed -->
+        <div>
+          <div class="section-title">
+            <span><i class="fa-solid fa-circle-dot" style="color: #ef4444;"></i> Recent Lost Reports</span>
+            <button class="btn-secondary" style="font-size: 0.8rem; padding: 4px 8px;" data-action="refresh-feeds">Refresh</button>
+          </div>
+          <div id="lost-items-feed" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Found Items Feed -->
+        <div>
+          <div class="section-title">
+            <span><i class="fa-solid fa-circle-dot" style="color: #10b981;"></i> Recent Found Reports</span>
+            <button class="btn-secondary" style="font-size: 0.8rem; padding: 4px 8px;" data-action="refresh-feeds">Refresh</button>
+          </div>
+          <div id="found-items-feed" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SCREEN 2: REPORT LOST ITEM -->
+    <!-- ================================================================= -->
+    <section id="screen-report-lost" class="screen">
+      <div class="form-card">
+        <h2 style="margin-bottom: 0.5rem; font-size: 1.6rem;"><i class="fa-solid fa-magnifying-glass-location" style="color: #ef4444;"></i> Report a Lost Item</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Provide as much detail as possible. Our semantic AI will recognize your item even if the finder describes it using different words.
+        </p>
+
+        <form id="form-report-lost">
+          <div class="form-group">
+            <label for="lost-title">Item Title *</label>
+            <input type="text" id="lost-title" required placeholder="e.g. Black college bag with blue water bottle">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lost-category">Category *</label>
+              <select id="lost-category" required>
+                <option value="Bag">Bag / Backpack</option>
+                <option value="Electronics">Electronics / Phone / Laptop</option>
+                <option value="Keys">Keys / Keychains</option>
+                <option value="Wallet">Wallet / Purse</option>
+                <option value="Jewelry">Jewelry / Watch</option>
+                <option value="Documents">Documents / Cards</option>
+                <option value="Clothing">Clothing / Accessories</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="lost-color">Primary Color *</label>
+              <input type="text" id="lost-color" required placeholder="e.g. Black, Grey, Silver, Blue">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="lost-desc">Detailed Description *</label>
+            <textarea id="lost-desc" rows="3" required placeholder="Describe appearance, contents, brand, condition"></textarea>
+          </div>
+
+          <!-- Private Hidden Characteristic (Fraud Protection) -->
+          <div class="private-box">
+            <div class="private-title"><i class="fa-solid fa-lock"></i> 🚨 Fraud Protection: Private Unique Characteristic</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              What makes your item uniquely identifiable? <strong>This detail will NOT be displayed publicly.</strong> When someone claims a match, they must state this hidden detail to verify ownership!
+            </p>
+            <input type="text" id="lost-hidden" required placeholder="e.g. Small tear on left strap, blue turtle keychain, custom engraving on back">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lost-location">Location Name *</label>
+              <input type="text" id="lost-location" required placeholder="e.g. College Library Main Entrance">
+            </div>
+            <div class="form-group">
+              <label for="lost-datetime">Date & Approximate Time Lost *</label>
+              <input type="datetime-local" id="lost-datetime" required>
+            </div>
+          </div>
+
+          <!-- Map Pin Picker -->
+          <div class="form-group">
+            <label>Click Map to Select Pin Coordinates</label>
+            <div id="map-lost" class="map-container"></div>
+            <div style="display: flex; gap: 1rem; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+              <span>Lat: <strong id="lost-lat-disp">12.9716</strong></span>
+              <span>Lon: <strong id="lost-lng-disp">77.5946</strong></span>
+            </div>
+            <input type="hidden" id="lost-lat" value="12.9716">
+            <input type="hidden" id="lost-lng" value="77.5946">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lost-owner-name">Your Name *</label>
+              <input type="text" id="lost-owner-name" required placeholder="e.g. Rohan Sharma">
+            </div>
+            <div class="form-group">
+              <label for="lost-owner-contact">Contact Details *</label>
+              <input type="text" id="lost-owner-contact" required placeholder="Email or Phone">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="lost-image">Upload Photo (Optional, Max 5MB)</label>
+            <input type="file" id="lost-image" accept=".jpg,.jpeg,.png,.webp">
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+            <i class="fa-solid fa-paper-plane"></i> Submit Lost Item Report
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SCREEN 3: REPORT FOUND ITEM -->
+    <!-- ================================================================= -->
+    <section id="screen-report-found" class="screen">
+      <div class="form-card">
+        <h2 style="margin-bottom: 0.5rem; font-size: 1.6rem;"><i class="fa-solid fa-hand-holding-heart" style="color: #34d399;"></i> Report a Found Item</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Help return an item to its rightful owner. Describe what you found publicly without revealing private hidden characteristics.
+        </p>
+
+        <form id="form-report-found">
+          <div class="form-group">
+            <label for="found-title">Item Title *</label>
+            <input type="text" id="found-title" required placeholder="e.g. Dark school bag containing a bottle">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="found-category">Category *</label>
+              <select id="found-category" required>
+                <option value="Bag">Bag / Backpack</option>
+                <option value="Electronics">Electronics / Phone / Laptop</option>
+                <option value="Keys">Keys / Keychains</option>
+                <option value="Wallet">Wallet / Purse</option>
+                <option value="Jewelry">Jewelry / Watch</option>
+                <option value="Documents">Documents / Cards</option>
+                <option value="Clothing">Clothing / Accessories</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="found-color">Primary Color *</label>
+              <input type="text" id="found-color" required placeholder="e.g. Dark, Black, Grey, Blue">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="found-desc">Description of Found Item *</label>
+            <textarea id="found-desc" rows="3" required placeholder="Describe where and how it was found"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="found-location">Location Found *</label>
+              <input type="text" id="found-location" required placeholder="e.g. Academic Block B Pathway">
+            </div>
+            <div class="form-group">
+              <label for="found-datetime">Date & Time Found *</label>
+              <input type="datetime-local" id="found-datetime" required>
+            </div>
+          </div>
+
+          <!-- Map Pin Picker -->
+          <div class="form-group">
+            <label>Click Map to Select Pin Coordinates</label>
+            <div id="map-found" class="map-container"></div>
+            <div style="display: flex; gap: 1rem; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+              <span>Lat: <strong id="found-lat-disp">12.9718</strong></span>
+              <span>Lon: <strong id="found-lng-disp">77.5949</strong></span>
+            </div>
+            <input type="hidden" id="found-lat" value="12.9718">
+            <input type="hidden" id="found-lng" value="77.5949">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="found-finder-name">Finder / Custodian Name *</label>
+              <input type="text" id="found-finder-name" required placeholder="e.g. Block B Security Desk">
+            </div>
+            <div class="form-group">
+              <label for="found-finder-contact">Contact Info *</label>
+              <input type="text" id="found-finder-contact" required placeholder="Email or Phone number">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="found-public-notes">Public Custody / Holding Notes</label>
+            <input type="text" id="found-public-notes" placeholder="e.g. Handed over to main campus security desk">
+          </div>
+
+          <div class="form-group">
+            <label for="found-image">Upload Photo (Optional, Max 5MB)</label>
+            <input type="file" id="found-image" accept=".jpg,.jpeg,.png,.webp">
+          </div>
+
+          <button type="submit" class="btn-emerald" style="width: 100%; justify-content: center; margin-top: 1rem;">
+            <i class="fa-solid fa-paper-plane"></i> Submit Found Item Report
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SCREEN 4: AI MATCH RESULTS -->
+    <!-- ================================================================= -->
+    <section id="screen-match-results" class="screen">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.8rem; font-weight: 800;"><i class="fa-solid fa-brain" style="color: #c084fc;"></i> Multidimensional AI Match Engine</h2>
+        <p style="color: var(--text-muted);">
+          Select an item report below to compute similarity across Image, Semantic Text, Spatial Location, Time Proximity, and Attribute Match.
+        </p>
+      </div>
+
+      <!-- Match Controls Panel -->
+      <div class="match-controls">
+        <div class="form-row" style="align-items: flex-end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="match-target-select">Select Report to Match Against Database:</label>
+            <select id="match-target-select">
+              <!-- Options populated dynamically -->
+            </select>
+          </div>
+          <div>
+            <button class="btn-primary" id="btn-run-match"><i class="fa-solid fa-arrows-rotate"></i> Compute AI Matches</button>
+          </div>
+        </div>
+
+        <!-- Custom Weight Slider Accordion -->
+        <details style="margin-top: 1.25rem;">
+          <summary style="cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #60a5fa;">
+            <i class="fa-solid fa-sliders"></i> Customize Algorithm Weightings (Advanced Explainable AI Tuning)
+          </summary>
+          <div class="slider-grid">
+            <div class="slider-item">
+              <label>Image Similarity <span><strong id="w-img-val">35</strong>%</span></label>
+              <input type="range" id="w-img" min="0" max="100" value="35">
+            </div>
+            <div class="slider-item">
+              <label>Semantic Text <span><strong id="w-txt-val">30</strong>%</span></label>
+              <input type="range" id="w-txt" min="0" max="100" value="30">
+            </div>
+            <div class="slider-item">
+              <label>Location Distance <span><strong id="w-loc-val">15</strong>%</span></label>
+              <input type="range" id="w-loc" min="0" max="100" value="15">
+            </div>
+            <div class="slider-item">
+              <label>Time Proximity <span><strong id="w-time-val">10</strong>%</span></label>
+              <input type="range" id="w-time" min="0" max="100" value="10">
+            </div>
+            <div class="slider-item">
+              <label>Attribute Match <span><strong id="w-attr-val">10</strong>%</span></label>
+              <input type="range" id="w-attr" min="0" max="100" value="10">
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Match Results Output Container -->
+      <div id="match-results-container">
+        <!-- Rendered by matching.js -->
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- BONUS TOOL: AI DOCUMENT CONTRADICTION DETECTOR -->
+    <!-- ================================================================= -->
+    <section id="screen-contradiction" class="screen">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.8rem; font-weight: 800;"><i class="fa-solid fa-file-triangle" style="color: #fbbf24;"></i> AI Document Contradiction Detector</h2>
+        <p style="color: var(--text-muted);">
+          Detect conflicting information across multiple PDFs, contracts, specifications, or documents automatically (Dates, Amounts, Locations, Versions, Requirements).
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-card" style="margin: 0;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-folder-open"></i> Input Documents to Analyze</h3>
+          
+          <div id="docs-input-list">
+            <!-- Doc 1 -->
+            <div class="doc-box">
+              <label>Document 1 Title</label>
+              <input type="text" class="doc-title-input" value="Project Specification Document A" style="margin-bottom: 0.5rem;">
+              <label>Document Text / Content</label>
+              <textarea class="doc-text-input" rows="4">Project deadline for final delivery is 25 September. Total allocated budget is $50,000 for Phase 1. Team leader responsible is Rohan.</textarea>
+            </div>
+            <!-- Doc 2 -->
+            <div class="doc-box">
+              <label>Document 2 Title</label>
+              <input type="text" class="doc-title-input" value="Client Email Confirmation B" style="margin-bottom: 0.5rem;">
+              <label>Document Text / Content</label>
+              <textarea class="doc-text-input" rows="4">As per discussion, project deadline for final delivery is 30 September. Phase 1 budget approved for $50,000.</textarea>
+            </div>
+            <!-- Doc 3 -->
+            <div class="doc-box">
+              <label>Document 3 Title</label>
+              <input type="text" class="doc-title-input" value="Internal Team Slack Export C" style="margin-bottom: 0.5rem;">
+              <label>Document Text / Content</label>
+              <textarea class="doc-text-input" rows="4">Heads up team, project deadline for final delivery is 28 September. We need to submit all assets by then.</textarea>
+            </div>
+          </div>
+
+          <button class="btn-secondary" style="width: 100%; margin-bottom: 1rem;" id="btn-add-doc"><i class="fa-solid fa-plus"></i> Add Another Document</button>
+          <button class="btn-primary" style="width: 100%; justify-content: center;" id="btn-run-contradiction"><i class="fa-solid fa-bolt"></i> Run Contradiction Detector</button>
+        </div>
+
+        <div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Contradiction Findings Matrix</h3>
+          <div id="contradiction-results">
+            <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; color: var(--text-muted);">
+              Click "Run Contradiction Detector" to analyze input documents for conflicting dates, amounts, and specs.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- SCREEN 5: MATCH VERIFICATION & FRAUD PROTECTION MODAL -->
+  <!-- ================================================================= -->
+  <div id="modal-verification" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa-solid fa-shield-halved" style="color: #8b5cf6;"></i> 🚨 Fraud Protection Verification</div>
+        <button class="close-btn" id="btn-close-modal">&times;</button>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+        To prevent fraudulent claims, describe one <strong>unpublicized hidden characteristic</strong> of this item (e.g. keychain detail, internal tear, unique scratch, or engraved text).
+      </p>
+
+      <form id="form-verify-claim">
+        <input type="hidden" id="modal-lost-id">
+        <input type="hidden" id="modal-found-id">
+
+        <div class="form-group">
+          <label for="claim-characteristic-input">Enter Private Identifying Detail *</label>
+          <input type="text" id="claim-characteristic-input" required placeholder="e.g. Blue keychain with turtle on zipper">
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+          <i class="fa-solid fa-key"></i> Verify & Unlock Contact Details
+        </button>
+      </form>
+
+      <div id="verification-result-box" style="margin-top: 1.25rem; display: none;">
+        <!-- Rendered by verification.js -->
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Retrace.io &copy; 2026 — AI Lost-and-Found Intelligence & Document Contradiction System
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/matching.js"></script>
+  <script src="js/verification.js"></script>
+  <script src="js/contradiction.js"></script>
+</body>
+</html>
